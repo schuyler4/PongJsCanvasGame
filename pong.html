@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Pong</title>
+	<style type="text/css">
+		#canvas {
+			background-color: black;
+			border: 2px solid black;
+		}
+
+	</style>
+</head>
+<body>
+	<canvas id="canvas" width="600" height="400">
+	</canvas>
+	<script type="text/javascript">
+		var canvas = document.getElementById("canvas");
+		var ctx = canvas.getContext("2d");
+
+		document.addEventListener("keydown", KeyDownHandler, false);
+
+		var paddleColor = "white"
+
+		var gameStart = false
+
+		var ball = {
+			width: 20,
+			height: 20,
+			x: 300,
+			y: 190,
+			color: "red",
+            movingRight: false,
+            movingLeft:  false,
+            movingUP: false,
+            movingDown: false
+		}
+		function paddle(width,height,x,y,midPoint) {
+			this.width = width
+			this.height = height
+			this.x = x
+			this.y = y
+            this.midPoint = midPoint
+		}
+
+		var rightPaddle = new paddle(10, 60, 10, 170,canvas.height / 2)
+		var leftPaddle = new paddle(10,60,580,170,canvas.height / 2)
+
+        var scores = {
+            score1: 0,
+            score2: 0,
+            score1X: canvas.width / 2 + 30,
+            score2X: canvas.width / 2 - 30,
+            scoreY: 30,
+        }
+        function drawScore1() {
+            ctx.beginPath()
+            ctx.font="20px Arial"
+            ctx.fillStyle = "white"
+            ctx.fill()
+            ctx.fillText(scores.score1,scores.score1X,scores.scoreY)
+            ctx.closePath()
+        }
+        function drawScore2() {
+            ctx.beginPath()
+            ctx.font="20px Arial"
+            ctx.fillStyle = "white"
+            ctx.fill()
+            ctx.fillText(scores.score2,scores.score2X,scores.scoreY)
+            ctx.closePath()
+        }
+		function drawRightPaddle() {
+			ctx.beginPath()
+			ctx.rect(rightPaddle.x,rightPaddle.y,rightPaddle.width,rightPaddle.height)
+			ctx.fillStyle = paddleColor
+			ctx.fill()
+			ctx.closePath()
+		}
+
+		function drawLeftPaddle() {
+			ctx.beginPath()
+			ctx.rect(leftPaddle.x,leftPaddle.y,leftPaddle.width,leftPaddle.height)
+			ctx.fillStyle = paddleColor
+			ctx.fill()
+			ctx.closePath()
+		}
+
+		function drawBall() {
+			ctx.beginPath()
+			ctx.rect(ball.x, ball.y, ball.width, ball.height)
+			ctx.fillStyle = ball.color
+			ctx.fill()
+			ctx.closePath()
+		}
+        var random = Math.floor(Math.random() * 2);
+        function startGame(){
+            if(gameStart == false) {
+				gameStart = true
+                if(random == 0) {
+                    ball.movingRight = true
+                }
+                else {
+                    ball.movingLeft = true
+                }
+            }
+        }
+		function KeyDownHandler(e) {
+			if(e.keyCode == 38) {
+				leftPaddle.y -= 10
+                leftPaddle.midPoint -= 10
+                startGame()
+			}
+			if(e.keyCode == 40) {
+				leftPaddle.y += 10
+                leftPaddle.midPoint += 10
+                startGame()
+			}
+
+			if(e.keyCode == 87) {
+				rightPaddle.y -= 10
+                rightPaddle.midPoint -= 10
+                startGame()
+			}
+			if(e.keyCode == 83) {
+				rightPaddle.y += 10
+                rightPaddle.midPoint += 10
+                startGame()
+			}
+		}
+		function ballMove() {
+			if(gameStart == true) {
+                    if(ball.movingRight == true) {
+                        ball.x += 1
+                    }
+                    else if(ball.movingLeft == true) {
+                        ball.x -= 1
+                    }
+                    if(ball.movingUP == true) {
+                        ball.y -= 1
+                    }
+                    else if(ball.movingDown == true) {
+                        ball.y += 1
+                    }
+			}
+		}
+        function reset() {
+            gameStart = false
+            ball.x = 300
+            ball.y = 190
+            ball.movingDown = false
+            ball.movingLeft = false
+            ball.movingRight = false
+            ball.movingUP = false
+            rightPaddle.y = 170
+            leftPaddle.y = 170
+        }
+        function ballColitions() {
+            //colition with right paddle
+            if(ball.x + ball.width > leftPaddle.x && leftPaddle.midPoint > ball.y 
+               && leftPaddle.midPoint - 49 < ball.y) {
+                console.log("goos")
+                ball.movingRight = false
+                ball.movingUP = true
+                ball.movingLeft = true
+            }
+            else if(ball.x + ball.width > leftPaddle.x && leftPaddle.midPoint < ball.y 
+                    && leftPaddle.midPoint + 49 > ball.y) {
+                console.log("panda")
+                ball.movingRight = false
+                ball.movingDown = true
+                ball.movingLeft = true
+            }
+            //colition with left paddle
+            if(ball.x < rightPaddle.x + rightPaddle.width && rightPaddle.midPoint > ball.y
+                && rightPaddle.midPoint - 49 < ball.y) {
+                ball.movingLeft = false
+                ball.movingRight = true
+                ball.movingUP = true
+            }
+            else if(ball.x < rightPaddle.x + rightPaddle.width && rightPaddle.midPoint < ball.y
+                   && rightPaddle.midPoint + 49 > ball.y) {
+                ball.movingLeft = false
+                ball.movingRight = true
+                ball.movingDown = true
+            }
+            //collition with top wall
+            if(ball.y < 0) {
+                ball.movingUP = false
+                ball.movingDown = true
+            }
+            //collition with bottum wall
+            else if(ball.y > canvas.height - 10) {
+                ball.movingDown = false
+                ball.movingUP = true
+            }
+            //reset
+            if(ball.x > canvas.width) {
+                scores.score2 += 1
+                reset()
+            }
+            else if(ball.x < 0) {
+                scores.score1 += 1
+                reset()
+            }
+        }
+		function draw(){
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawScore1()
+            drawScore2()
+			drawRightPaddle()
+			drawLeftPaddle()
+			drawBall()
+			ballMove()
+            ballColitions()
+            console.log(rightPaddle.midPoint)
+		}
+		setInterval(draw,10)
+	</script>
+</body>
+</html>
